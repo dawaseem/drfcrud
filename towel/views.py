@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import HttpResponse
 from .models import Student
+from django.db.models import Q
 
 
 # Create your views here.
@@ -37,6 +38,26 @@ def student_detail(request, pk):
         return Response('No Records Found', status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['GET'])
+def filter_student(request):
+    data = request.data
+    print('Here...1 ')
+    try:
+        fname = data['fname']
+        lname = data['lname']
+        print('here...2', fname, lname)
+    except:
+        fname = None
+        lname = None
+    try:
+        student = Student.objects.get(Q(name__startswith=fname) | Q(name__endswith=lname), is_deleted=False )
+        serializer = StudentSerializer(student)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except:
+        return Response('No Matches found', status=status.HTTP_404_NOT_FOUND)
+
+
 @api_view(['PUT'])
 def update_student(request, pk):
     try:
@@ -60,4 +81,3 @@ def delete_student(request, pk):
         return Response('Student deleted successfully!')
     except:
         return Response('No records found!')
-
